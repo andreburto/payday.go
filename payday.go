@@ -34,16 +34,16 @@ func FindPayday(theDate time.Time) time.Time {
 }
 
 func NextPayday(y int, m int, d int) time.Time {
-	var midPayday int = 15
-	var lastPayday int = LastDayOfMonth(y, m)
+	var firstPayday int = 5
+	var secondPayday int = firstPayday + 14
 	var paydate time.Time
 
-	if d < midPayday {
-		paydate = FindPayday(time.Date(y, time.Month(m), midPayday, 0, 0, 0, 0, time.Local))
-	} else if d < lastPayday {
-		paydate = FindPayday(time.Date(y, time.Month(m), lastPayday, 0, 0, 0, 0, time.Local))
+	if d < firstPayday {
+		paydate = FindPayday(time.Date(y, time.Month(m), firstPayday, 0, 0, 0, 0, time.Local))
+	} else if d < secondPayday {
+		paydate = FindPayday(time.Date(y, time.Month(m), secondPayday, 0, 0, 0, 0, time.Local))
 	} else {
-		var nextMonth time.Time = time.Date(y, time.Month(m), lastPayday, 0, 0, 0, 0, time.Local).AddDate(0, 0, 1)
+		var nextMonth time.Time = time.Date(y, time.Month(m), 1, 0, 0, 0, 0, time.Local).AddDate(0, 1, 0)
 		paydate = NextPayday(nextMonth.Year(), int(nextMonth.Month()), nextMonth.Day())
 	}
 

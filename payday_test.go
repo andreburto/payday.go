@@ -59,20 +59,20 @@ func TestPaydayIsWeekend(t *testing.T) {
 }
 
 func TestPaydayNextPayday(t *testing.T) {
-	firstPayday := time.Date(2024, time.Month(3), 15, 0, 0, 0, 0, time.Local)
+	firstPayday := time.Date(2024, time.Month(3), 5, 0, 0, 0, 0, time.Local)
 	firstActual := NextPayday(2024, 3, 1)
 	if firstActual != firstPayday {
 		t.Errorf("1. %s != %s", firstActual, firstPayday)
 	}
 
-	secondPayday := time.Date(2024, time.Month(3), 29, 0, 0, 0, 0, time.Local)
-	secondActual := NextPayday(2024, 3, 15)
+	secondPayday := time.Date(2024, time.Month(3), 19, 0, 0, 0, 0, time.Local)
+	secondActual := NextPayday(2024, 3, 5)
 	if NextPayday(2024, 3, 15) != secondPayday {
 		t.Errorf("2. %s != %s", secondActual, secondPayday)
 	}
 
-	thirdPayday := time.Date(2024, time.Month(4), 15, 0, 0, 0, 0, time.Local)
-	thirdActual := NextPayday(2024, 3, 29)
+	thirdPayday := time.Date(2024, time.Month(4), 5, 0, 0, 0, 0, time.Local)
+	thirdActual := NextPayday(2024, 3, 19)
 	if NextPayday(2024, 3, 31) != thirdPayday {
 		t.Errorf("3. %s != %s", thirdActual, thirdPayday)
 	}
