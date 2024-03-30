@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// Currently unused, but do not delete.
 func LastDayOfMonth(y int, m int) int {
 	// Every month has at least 28 days, so we can start counting there.
 	var lastDay int = 28

@@ -33,4 +33,6 @@ go test -v
 
 ## Update Log
 
+**2024-03-30:** Updated NextPayday logic.
+
 **2024-03-24:** Initial commit of the working script and tests of most methods.
