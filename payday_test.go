@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"os"
 	"testing"
 	"time"
 )
@@ -21,6 +23,58 @@ type Month struct {
 type Format struct {
 	S    string
 	Date time.Time
+}
+
+func _GetFilePath() (string, string) {
+	currentPath, err := os.Getwd()
+	check(err)
+	testFileName := "test_payday.yml"
+	testYamlFile := fmt.Sprintf("%s/%s", currentPath, testFileName)
+	return testFileName, testYamlFile
+}
+
+func _SetupSettings() {
+	testYamlValues := "---\n\n" +
+										"first_payday: 10\n" +
+										"next_payday: TWO_WEEKS\n"
+	testFileName, testYamlFile := _GetFilePath()
+	os.WriteFile(testYamlFile, []byte(testYamlValues), 0777)
+	os.Setenv("PAYDAY_SETTINGS", testFileName)
+}
+
+func _TeardownSettings() {
+	_, testYamlFile := _GetFilePath()
+	defer os.Unsetenv("PAYDAY_SETTINGS")
+	os.Remove(testYamlFile)
+}
+
+func TestGetSettingsFileName(t *testing.T) {
+	var firstExpected string = "payday.yml"
+	var secondExpected string = "test.yml"
+
+	firstActual := GetSettingsFileName()
+
+	os.Setenv("PAYDAY_SETTINGS", secondExpected)
+	secondActual := GetSettingsFileName()
+
+	if firstActual != firstExpected {
+		t.Error("Default value test failed.")
+	}
+
+	if secondActual != secondExpected {
+		t.Error("Environment value test failed.")
+	}
+
+	defer os.Unsetenv("PAYDAY_SETTINGS")
+}
+
+func TestLoadSettings(t *testing.T) {
+	_SetupSettings()
+	actualFirstPayday, actualNextPaydayMarker := LoadSettings()
+	if actualFirstPayday != 10 || actualNextPaydayMarker != "TWO_WEEKS" {
+		t.Error("Expected settings did not load.")
+	}
+	_TeardownSettings()
 }
 
 func TestPaydayLastDayOfMonth(t *testing.T) {
@@ -58,24 +112,28 @@ func TestPaydayIsWeekend(t *testing.T) {
 	}
 }
 
-func TestPaydayNextPayday(t *testing.T) {
-	firstPayday := time.Date(2024, time.Month(3), 5, 0, 0, 0, 0, time.Local)
+func TestPaydayNextPaydayTwoWeeks(t *testing.T) {
+	_SetupSettings()
+
+	firstPayday := time.Date(2024, time.Month(3), 8, 0, 0, 0, 0, time.Local)
 	firstActual := NextPayday(2024, 3, 1)
 	if firstActual != firstPayday {
 		t.Errorf("1. %s != %s", firstActual, firstPayday)
 	}
 
-	secondPayday := time.Date(2024, time.Month(3), 19, 0, 0, 0, 0, time.Local)
-	secondActual := NextPayday(2024, 3, 5)
-	if NextPayday(2024, 3, 15) != secondPayday {
+	secondPayday := time.Date(2024, time.Month(3), 22, 0, 0, 0, 0, time.Local)
+	secondActual := NextPayday(2024, 3, 10)
+	if secondActual != secondPayday {
 		t.Errorf("2. %s != %s", secondActual, secondPayday)
 	}
 
-	thirdPayday := time.Date(2024, time.Month(4), 5, 0, 0, 0, 0, time.Local)
-	thirdActual := NextPayday(2024, 3, 19)
-	if NextPayday(2024, 3, 31) != thirdPayday {
+	thirdPayday := time.Date(2024, time.Month(4), 10, 0, 0, 0, 0, time.Local)
+	thirdActual := NextPayday(2024, 3, 22)
+	if thirdActual != thirdPayday {
 		t.Errorf("3. %s != %s", thirdActual, thirdPayday)
 	}
+
+	_TeardownSettings()
 }
 
 func TestPaydayDateFormat(t *testing.T) {

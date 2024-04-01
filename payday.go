@@ -2,10 +2,46 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"time"
+
+	"gopkg.in/yaml.v3"
 )
 
-// Currently unused, but do not delete.
+type PaydaySettings struct {
+	First int `yaml:"first_payday"`
+	Next  string `yaml:"next_payday"`
+}
+
+func check(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
+
+func GetSettingsFileName() string {
+	filename, ok := os.LookupEnv("PAYDAY_SETTINGS")
+	if !ok {
+		filename = "payday.yml"
+	}
+	return filename
+}
+
+func LoadSettings() (int, string) {
+	workingPath, err := os.Getwd()
+	check(err)
+
+	settingFilePath := fmt.Sprintf("%s/%s", workingPath, GetSettingsFileName())
+
+	dat, err := os.ReadFile(settingFilePath)
+	check(err)
+
+	settings := PaydaySettings{}
+	yaml.Unmarshal(dat, &settings)
+
+	return settings.First, settings.Next
+}
+
 func LastDayOfMonth(y int, m int) int {
 	// Every month has at least 28 days, so we can start counting there.
 	var lastDay int = 28
@@ -35,17 +71,30 @@ func FindPayday(theDate time.Time) time.Time {
 }
 
 func NextPayday(y int, m int, d int) time.Time {
-	var firstPayday int = 5
-	var secondPayday int = firstPayday + 14
-	var paydate time.Time
+	var firstPayday int
+	var nextPaydayMarker string 
+	firstPayday, nextPaydayMarker = LoadSettings()
 
+	var paydate time.Time
 	if d < firstPayday {
 		paydate = FindPayday(time.Date(y, time.Month(m), firstPayday, 0, 0, 0, 0, time.Local))
-	} else if d < secondPayday {
-		paydate = FindPayday(time.Date(y, time.Month(m), secondPayday, 0, 0, 0, 0, time.Local))
 	} else {
-		var nextMonth time.Time = time.Date(y, time.Month(m), 1, 0, 0, 0, 0, time.Local).AddDate(0, 1, 0)
-		paydate = NextPayday(nextMonth.Year(), int(nextMonth.Month()), nextMonth.Day())
+		var nextPayday int
+
+		switch nextPaydaySwitch := nextPaydayMarker; nextPaydaySwitch {
+		case "TWO_WEEKS":
+			nextPayday = firstPayday + 14
+		case "LAST_DAY":
+			nextPayday = LastDayOfMonth(y, m)
+		default:
+			panic("Next payday setting not found.")
+		}
+
+		paydate = FindPayday(time.Date(y, time.Month(m), nextPayday, 0, 0, 0, 0, time.Local))
+		if d >= paydate.Day() {
+			var nextMonth time.Time = time.Date(y, time.Month(m), 1, 0, 0, 0, 0, time.Local).AddDate(0, 1, 0)
+			paydate = NextPayday(nextMonth.Year(), int(nextMonth.Month()), nextMonth.Day())
+		}
 	}
 
 	return paydate
